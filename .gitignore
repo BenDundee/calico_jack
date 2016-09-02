@@ -1,0 +1,8 @@
+!.gitignore
+
+# (Private) config files
+*.pcfg
+
+# IDE shit
+.idea/
+
