@@ -160,6 +160,7 @@ class KickerScoring(_ScoringHandler):
 
         # Attributes
         self.pat = cfg.get("pat")
+        self.pat_missed = cfg.get("pat_missed")
 
         # FG Scoring
         self.fg_scoring = cfg.get("fg_scores")
@@ -219,6 +220,9 @@ class KickerScoring(_ScoringHandler):
 
         # PAT
         score += pplayer.kicking_xpmade * self.pat
+
+        # PAT missed
+        score += pplayer.kicking_xpmissed * self.pat_missed
 
         # score fg
         if pplayer.kicking_fgmissed:
