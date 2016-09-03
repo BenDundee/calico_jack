@@ -1,0 +1,5 @@
+!.gitignore
+
+#private config files
+*.pcfg
+!team.pcfg.example

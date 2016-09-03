@@ -9,9 +9,12 @@ def _range_checker(x, lower, upper):
     """
     Return true if lower <= x <= upper, however, treats None as infinity.
 
-    :param lower:
-    :param upper:
-    :return:
+    :param lower: bound
+    :type lower: int
+    :param upper: bound
+    :type lower: int or None
+    :return: lower <= x <= upper
+    :rtype: bool
     """
     if x >= lower:
         if upper is None:
@@ -51,13 +54,6 @@ class ThrowerScoring(_ScoringHandler):
         self.passing_bonus = BonusHandler(cfg.get("passing_bonus"))
 
     def calculate_score(self, pplayer):
-        """
-
-        :param pplayer: a single PlayPlayer
-        :type pplayer: PlayPlayer
-        :return: A score
-        :rtype: float
-        """
         score = 0.0
 
         # passing yards
@@ -93,13 +89,6 @@ class CatcherScoring(_ScoringHandler):
         self.receiving_bonus = BonusHandler(cfg.get("receiving_bonus"))
 
     def calculate_score(self, pplayer):
-        """
-
-        :param pplayer: a single PlayPlayer
-        :type pplayer: PlayPlayer
-        :return: A score
-        :rtype: float
-        """
         score = 0.0
 
         # TODO: abstract this away
@@ -131,13 +120,6 @@ class RunnerScoring(_ScoringHandler):
         self.rushing_bonus = BonusHandler(cfg.get("rushing_bonus"))
 
     def calculate_score(self, pplayer):
-        """
-
-        :param pplayer: a single PlayPlayer
-        :type pplayer: PlayPlayer
-        :return: A score
-        :rtype: float
-        """
         score = 0.0
 
         # TODO: Abstract this away
@@ -172,14 +154,6 @@ class KickerScoring(_ScoringHandler):
         self._is_tiered_scoring_model = type(self.fg_scoring) is list
 
     def __score_fg(self, made, length):
-        """
-
-        :param made: Boolean. True if the attempt was good, False if it was missed.
-        :type made: bool
-        :param length: Length of the attempt.
-        :type length: int
-        :return:
-        """
 
         # Simple scoring model
         if self._is_simple_scoring_model:
@@ -209,13 +183,6 @@ class KickerScoring(_ScoringHandler):
             raise NotImplementedError("This field goal scoring method has not been invented yet!")
 
     def calculate_score(self, pplayer):
-        """
-
-        :param pplayer: a single PlayPlayer
-        :type pplayer: PlayPlayer
-        :return: A score
-        :rtype: float
-        """
         score = 0.0
 
         # PAT
@@ -262,13 +229,6 @@ class DefStScoring(_ScoringHandler):
         self.def_yds_allowed = cfg.get("def_yds_allowed")
 
     def calculate_score(self, pplayer):
-        """
-
-        :param pplayer: a single PlayPlayer
-        :type pplayer: PlayPlayer
-        :return: A score
-        :rtype: float
-        """
         return 0
 
 

@@ -1,0 +1,31 @@
+qb:
+    starters:
+        - Eli Manning
+rb:
+    starters:
+        - Giovanni Bernard
+        - James Starks
+    bench:
+        - Derrick Henry
+        - Darren Sproles
+wr:
+    starters:
+        - Julio Jones
+        - Larry Fitzgerald
+    bench:
+        - T.Y. Hilton
+        - Jarvis Landry
+        - Corey Coleman
+        - Will Fuller
+te:
+    starters:
+        - Gary Barnidge
+flex:
+    starters:
+        - Sammy Watkins
+k:
+    starters:
+        - Chris Boswell
+def:
+    starters:
+        - NYG

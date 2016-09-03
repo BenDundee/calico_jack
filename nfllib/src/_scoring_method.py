@@ -2,17 +2,17 @@
 from __future__ import absolute_import, division
 
 import itertools as it
-from os import path
-
 from nfldb import Play
+from os import path
 from yaml import load
 
 from nfllib.src._scoring_handlers import ThrowerScoring, CatcherScoring, RunnerScoring, KickerScoring, DefStScoring
+from nfllib.src._configurable import Configurable
 
 DEFAULT_FILE_LOCATION = "config/scoring.cfg"
 
 
-class ScoringMethod(object):
+class ScoringMethod(Configurable):
     """
     A class designed to return the fantasy score of a set of plays.
 
@@ -22,9 +22,12 @@ class ScoringMethod(object):
         """
 
         :param cfg_location: Location of scoring config file
+        :type cfg_location: basestring
         """
         self.stub = path.abspath(path.dirname(__file__)) + "/../{0}"
-        self.config = self._get_scoring_method(cfg_location)
+        if cfg_location is None:
+            cfg_location = self.stub.format(DEFAULT_FILE_LOCATION)
+        super(ScoringMethod, self).__init__(cfg_location)
 
         # Scoring handlers
         self.thrower_scoring = ThrowerScoring(self.config.get("thrower_scoring"))
