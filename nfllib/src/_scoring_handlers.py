@@ -1,12 +1,29 @@
 #!
-from __future__ import division
+from __future__ import division, absolute_import
 
+import itertools as it
 from nfldb import PlayPlayer
+
+
+def _range_checker(x, lower, upper):
+    """
+    Return true if lower <= x <= upper, however, treats None as infinity.
+
+    :param lower:
+    :param upper:
+    :return:
+    """
+    if x >= lower:
+        if upper is None:
+            return True
+        else:
+            return x <= upper
+    return False
 
 
 class _ScoringHandler(object):
 
-    def __index__(self, cfg):
+    def __init__(self, cfg):
         pass
 
     def calculate_score(self, pplayer):
@@ -23,6 +40,9 @@ class _ScoringHandler(object):
 class ThrowerScoring(_ScoringHandler):
 
     def __init__(self, cfg):
+        super(ThrowerScoring, self).__init__(cfg)
+
+        # Attributes
         self.passing_yds = cfg.get("passing_yds")
         self.int_thrown = cfg.get("int_thrown")
         self.passing_td = cfg.get("passing_td")
@@ -63,6 +83,9 @@ class ThrowerScoring(_ScoringHandler):
 class CatcherScoring(_ScoringHandler):
 
     def __init__(self, cfg):
+        super(CatcherScoring, self).__init__(cfg)
+
+        # Attributes
         self.receiving_yds = cfg.get("receiving_yds")
         self.receptions = cfg.get("receptions")
         self.receiving_tds = cfg.get("receiving_td")
@@ -99,6 +122,9 @@ class CatcherScoring(_ScoringHandler):
 class RunnerScoring(_ScoringHandler):
 
     def __init__(self, cfg):
+        super(RunnerScoring, self).__init__(cfg)
+
+        # Attributes
         self.rushing_yds = cfg.get("rushing_yds")
         self.rushing_td = cfg.get("rushing_td")
         self.rushing_2pc = cfg.get("rushing_2pc")
@@ -121,7 +147,6 @@ class RunnerScoring(_ScoringHandler):
         # TDs
         score += pplayer.rushing_tds * self.rushing_td
 
-
         # 2pt conversion
         score += pplayer.rushing_twoptm * self.rushing_2pc
 
@@ -131,8 +156,56 @@ class RunnerScoring(_ScoringHandler):
 class KickerScoring(_ScoringHandler):
 
     def __init__(self, cfg):
+        super(KickerScoring, self).__init__(cfg)
+
+        # Attributes
         self.pat = cfg.get("pat")
-        self.fg_scores = cfg.get("fg_scores")
+
+        # FG Scoring
+        self.fg_scoring = cfg.get("fg_scores")
+
+        # All field goals worth the same amount (may be 0).
+        self._is_simple_scoring_model = type(self.fg_scoring) in (int, None)
+
+        # Otherwise, use tiered model
+        self._is_tiered_scoring_model = type(self.fg_scoring) is list
+
+    def __score_fg(self, made, length):
+        """
+
+        :param made: Boolean. True if the attempt was good, False if it was missed.
+        :type made: bool
+        :param length: Length of the attempt.
+        :type length: int
+        :return:
+        """
+
+        # Simple scoring model
+        if self._is_simple_scoring_model:
+            fgs_worth = 0 if self.fg_scoring is None else self.fg_scoring
+            return fgs_worth if made else 0
+
+        elif self._is_tiered_scoring_model:
+            # Tiered makes and misses
+            makes = sorted(
+                (x for x in self.fg_scoring if x["action"] == "make")
+                , key=lambda x: x["lower_bound"]
+            )
+            misses = sorted(
+                (x for x in self.fg_scoring if x["action"] == "make")
+                , key=lambda x: x["lower_bound"]
+            )
+
+            # Either make it or miss it. Another option?
+            if made:
+                # They're ordered, so take the first one
+                tier = it.ifilter(lambda x: _range_checker(length, x["lower_bound"], x["upper_bound"]), makes).next()
+            else:
+                tier = it.ifilter(lambda x: _range_checker(length, x["lower_bound"], x["upper_bound"]), misses).next()
+            return tier["points"]
+
+        else:
+            raise NotImplementedError("This field goal scoring method has not been invented yet!")
 
     def calculate_score(self, pplayer):
         """
@@ -142,12 +215,26 @@ class KickerScoring(_ScoringHandler):
         :return: A score
         :rtype: float
         """
-        return 0
+        score = 0.0
+
+        # PAT
+        score += pplayer.kicking_xpmade * self.pat
+
+        # score fg
+        if pplayer.kicking_fgmissed:
+            score += self.__score_fg(False, pplayer.kicking_fgmissed_yds)
+        if pplayer.kicking_fgm:
+            score += self.__score_fg(True, pplayer.kicking_fgm_yds)
+
+        return score
 
 
 class DefStScoring(_ScoringHandler):
 
     def __init__(self, cfg):
+        super(DefStScoring, self).__init__(cfg)
+
+        # Attributes
         self.kickoff_return_td = cfg.get("kickoff_return_td")
         self.punt_return_td = cfg.get("punt_return_td")
         self.fumble_rec_td = cfg.get("fumble_rec_td")
@@ -184,7 +271,7 @@ class DefStScoring(_ScoringHandler):
 class Bonus(_ScoringHandler):
 
     def __init__(self, cfg):
-        pass
+        super(Bonus, self).__init__(cfg)
 
     def calculate_score(self, pplayer):
         return 0
@@ -193,7 +280,7 @@ class Bonus(_ScoringHandler):
 class BonusHandler(_ScoringHandler):
 
     def __init__(self, cfg):
-        pass
+        super(BonusHandler, self).__init__(cfg)
 
     def calculate_score(self, pplayer):
         return 0

@@ -1,13 +1,13 @@
 #!
+from __future__ import absolute_import, division
 
 import itertools as it
 from os import path
+
 from nfldb import Play
 from yaml import load
 
-from _scoring_handlers import ThrowerScoring, CatcherScoring, RunnerScoring, KickerScoring, DefStScoring
-from _scoring_handlers import Bonus, BonusHandler
-
+from nfllib.src._scoring_handlers import ThrowerScoring, CatcherScoring, RunnerScoring, KickerScoring, DefStScoring
 
 DEFAULT_FILE_LOCATION = "config/scoring.cfg"
 
@@ -23,7 +23,7 @@ class ScoringMethod(object):
 
         :param cfg_location: Location of scoring config file
         """
-        self.stub = path.abspath(path.dirname(__file__)) + "/{0}"
+        self.stub = path.abspath(path.dirname(__file__)) + "/../{0}"
         self.config = self._get_scoring_method(cfg_location)
 
         # Scoring handlers
@@ -68,7 +68,8 @@ class ScoringMethod(object):
     def _get_scoring_method(self, cfg_location=None):
         if not cfg_location:
             cfg_location = self.stub.format(DEFAULT_FILE_LOCATION)
-        return load(file(cfg_location, 'r'))
+        with open(cfg_location, 'r') as f:
+            return load(f)
 
 
 if __name__ == "__main__":
@@ -81,4 +82,4 @@ if __name__ == "__main__":
     _ = q.play(gsis_id="2009081350")
     score = sm.calculate_score(q.as_plays())
 
-    print 'break!'
+    print('break!')

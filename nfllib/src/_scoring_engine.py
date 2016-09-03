@@ -1,6 +1,7 @@
 #!
+from __future__ import absolute_import
 
-from _scoring_method import ScoringMethod
+from ._scoring_method import ScoringMethod
 
 
 class ScoringEngine(object):
