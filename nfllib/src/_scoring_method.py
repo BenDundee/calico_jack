@@ -4,7 +4,6 @@ from __future__ import absolute_import, division
 import itertools as it
 from nfldb import Play
 from os import path
-from yaml import load
 
 from nfllib.src._scoring_handlers import ThrowerScoring, CatcherScoring, RunnerScoring, KickerScoring, DefStScoring
 from nfllib.src._configurable import Configurable

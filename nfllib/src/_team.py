@@ -2,35 +2,45 @@
 
 import itertools as it
 from os import path
-from nfldb import Player, Team, Query, player_search, connect
+from nfldb import Query, player_search, connect, standard_team
 
 from nfllib.src._configurable import Configurable
 
 
-def _get_player_inst(dat, conn):
+def _player_lookup(player, conn):
+    try:
+        q = Query(conn)
+        p = q.player(full_name=player).as_players()
+        if len(p) == 1:
+            return p[0].full_name, p[0].player_id
+        else:
+            similar = "\n\t* ".join(x[0].full_name for x in player_search(conn, s, limit=3))
+            msg = "{0} could not be found in player DB. Similar results:\n\t* {1}".format(s, similar)
+            raise Exception(msg)
+    except Exception as e:
+        raise Exception("Error looking up names, details follow. {0}".format(e))
 
-    def player_lookup(player):
-        try:
-            q = Query(conn)
-            p = q.player(full_name=player).as_players()
-            if len(p) == 1:
-                return p[0]
-            else:
-                similar = "\n\t* ".join(x[0].full_name for x in player_search(conn, s, limit=3))
-                msg = "{0} could not be found in player DB. Similar results:\n\t* {1}".format(s, similar)
-                raise Exception(msg)
-        except Exception as e:
-            raise Exception("Error looking up names, details follow. {0}".format(e))
 
+def _defense_lookup(d, conn):
+    t = standard_team(d)
+    if t != 'UNK':
+        return t, t
+    else:
+        return _player_lookup(d, conn)
+
+
+def _get_player(dat, conn):
     return {
-        "starters": [player_lookup(s) for s in dat.get("starters", [])]
-        , "bench": [player_lookup(b) for b in dat.get("bench", [])]
+        "starters": [_player_lookup(s, conn) for s in dat.get("starters", [])]
+        , "bench": [_player_lookup(b, conn) for b in dat.get("bench", [])]
     }
 
 
 def _get_defense(dat, conn):
-    # Is this league using D/ST?
-    return False, 0
+    return {
+        "starters": [_defense_lookup(s, conn) for s in dat.get("starters", [])]
+        , "bench": [_defense_lookup(b, conn) for b in dat.get("bench", [])]
+    }
 
 
 class FantasyTeam(Configurable):
@@ -46,15 +56,15 @@ class FantasyTeam(Configurable):
         super(FantasyTeam, self).__init__(cfg_location)
 
         # team
-        self.qb = _get_player_inst(self.config.get("qb", {}), conn)
-        self.rb = _get_player_inst(self.config.get("rb", {}), conn)
-        self.wr = _get_player_inst(self.config.get("wr", {}), conn)
-        self.te = _get_player_inst(self.config.get("te", {}), conn)
-        self.k = _get_player_inst(self.config.get("k", {}), conn)
-        self.flex = _get_player_inst(self.config.get("flex", {}), conn)
+        self.qb = _get_player(self.config.get("qb", {}), conn)
+        self.rb = _get_player(self.config.get("rb", {}), conn)
+        self.wr = _get_player(self.config.get("wr", {}), conn)
+        self.te = _get_player(self.config.get("te", {}), conn)
+        self.k = _get_player(self.config.get("k", {}), conn)
+        self.flex = _get_player(self.config.get("flex", {}), conn)
 
         # Defense separately
-        self.is_idp, self.def_ = _get_defense(self.config.get("def", {}), conn)
+        self.def_ = _get_defense(self.config.get("def", {}), conn)
 
     @property
     def starters(self):
