@@ -50,7 +50,6 @@ class ThrowerScoring(_ScoringHandler):
         self.int_thrown = cfg.get("int_thrown")
         self.passing_td = cfg.get("passing_td")
         self.passing_2pc = cfg.get("passing_2pc")
-        self.passing_gt_400yds = cfg.get("passing_gt_400yds")
         self.passing_bonus = BonusHandler(cfg.get("passing_bonus"))
 
     def calculate_score(self, pplayer):

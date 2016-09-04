@@ -2,4 +2,4 @@
 
 #private config files
 *.pcfg
-!team.pcfg.example
+!*.example

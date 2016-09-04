@@ -1,0 +1,4 @@
+## File locations are either relative to this file or absolute.
+
+scoring_method: scoring.pcfg
+fantasy_team: team.pcfg

@@ -9,7 +9,7 @@ from yaml import load
 from nfllib.src._scoring_handlers import ThrowerScoring, CatcherScoring, RunnerScoring, KickerScoring, DefStScoring
 from nfllib.src._configurable import Configurable
 
-DEFAULT_FILE_LOCATION = "config/scoring.cfg"
+DEFAULT_FILE_LOCATION = "config/scoring.pcfg"
 
 
 class ScoringMethod(Configurable):
@@ -67,12 +67,6 @@ class ScoringMethod(Configurable):
             score[p.player.player_id] += self.apply_handlers(p)
 
         return score
-
-    def _get_scoring_method(self, cfg_location=None):
-        if not cfg_location:
-            cfg_location = self.stub.format(DEFAULT_FILE_LOCATION)
-        with open(cfg_location, 'r') as f:
-            return load(f)
 
 
 if __name__ == "__main__":
