@@ -9,8 +9,6 @@ from yaml import load
 from nfllib.src._scoring_handlers import ThrowerScoring, CatcherScoring, RunnerScoring, KickerScoring, DefStScoring
 from nfllib.src._configurable import Configurable
 
-DEFAULT_FILE_LOCATION = "config/scoring.pcfg"
-
 
 class ScoringMethod(Configurable):
     """
@@ -18,15 +16,12 @@ class ScoringMethod(Configurable):
 
     """
 
-    def __init__(self, cfg_location=None):
+    def __init__(self, cfg_location):
         """
 
         :param cfg_location: Location of scoring config file
         :type cfg_location: basestring
         """
-        self.stub = path.abspath(path.dirname(__file__)) + "/../{0}"
-        if cfg_location is None:
-            cfg_location = self.stub.format(DEFAULT_FILE_LOCATION)
         super(ScoringMethod, self).__init__(cfg_location)
 
         # Scoring handlers
@@ -72,9 +67,10 @@ class ScoringMethod(Configurable):
 if __name__ == "__main__":
     import nfldb as nfl
 
-    db = nfl.connect()
-    sm = ScoringMethod()
+    cfg_loc = path.abspath(path.dirname(__file__)) + "/../config/scoring.pcfg"
+    sm = ScoringMethod(cfg_loc)
 
+    db = nfl.connect()
     q = nfl.Query(db)
     _ = q.play(gsis_id="2009081350")
     score = sm.calculate_score(q.as_plays())

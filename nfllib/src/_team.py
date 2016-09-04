@@ -7,9 +7,6 @@ from nfldb import Player, Team, Query, player_search, connect
 from nfllib.src._configurable import Configurable
 
 
-DEFAULT_FILE_LOCATION = "config/team.pcfg"
-
-
 def _get_player_inst(dat, conn):
 
     def player_lookup(player):
@@ -38,7 +35,7 @@ def _get_defense(dat, conn):
 
 class FantasyTeam(Configurable):
 
-    def __init__(self, conn, cfg_location=None):
+    def __init__(self, conn, cfg_location):
         """
 
         :param conn: connection object (returned by nfldb.connect())
@@ -46,9 +43,6 @@ class FantasyTeam(Configurable):
         :param cfg_location: location of config file
         :type cfg_location: str
         """
-        self.stub = path.abspath(path.dirname(__file__)) + "/../{0}"
-        if cfg_location is None:
-            cfg_location = self.stub.format(DEFAULT_FILE_LOCATION)
         super(FantasyTeam, self).__init__(cfg_location)
 
         # team
@@ -88,8 +82,9 @@ class FantasyTeam(Configurable):
 
 if __name__ == "__main__":
 
+    cfg_loc = path.abspath(path.dirname(__file__)) + "/../config/team.pcfg"
     db = connect()
-    team = FantasyTeam(db)
+    team = FantasyTeam(db, cfg_loc)
     starters = team.starters
     bench = team.bench
 
