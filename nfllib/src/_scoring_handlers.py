@@ -1,8 +1,9 @@
 #!
 from __future__ import division, absolute_import
 
+from decimal import Decimal
 import itertools as it
-from nfldb import PlayPlayer
+from nfldb import Game
 
 
 def _range_checker(x, lower, upper):
@@ -27,15 +28,17 @@ def _range_checker(x, lower, upper):
 class _ScoringHandler(object):
 
     def __init__(self, cfg):
-        pass
+        self.score = dict()  # type: dict(basestring, Decimal)
 
-    def calculate_score(self, pplayer):
+    def calculate_score(self, game, player_id=None):
         """
 
-        :param pplayer: a single PlayPlayer
-        :type pplayer: PlayPlayer
+        :param game: a single Game
+        :type game: Game
+        :param player_id: basestring
+        :type player_id:
         :return: A score
-        :rtype: float
+        :rtype: dict[str, float]
         """
         raise NotImplementedError("This method must be overridden")
 
@@ -52,8 +55,22 @@ class ThrowerScoring(_ScoringHandler):
         self.passing_2pc = cfg.get("passing_2pc")
         self.passing_bonus = BonusHandler(cfg.get("passing_bonus"))
 
-    def calculate_score(self, pplayer):
-        score = 0.0
+    def calculate_score(self, game, player_id=None):
+
+        # Initialize score
+        self.score = {
+            p.player_id: Decimal(0.0) for p in game.as_players()
+        }
+
+        # Total passing yards
+        total_passing_yards =
+
+
+
+
+
+
+
 
         # passing yards
         # TODO: abstract this behavior away
@@ -228,6 +245,18 @@ class DefStScoring(_ScoringHandler):
         self.def_yds_allowed = cfg.get("def_yds_allowed")
 
     def calculate_score(self, pplayer):
+        score = 0.0
+
+        # Regular defensive stuff
+        score += pplayer.defense_sk * self.sack
+        score += pplayer.fumbles_lost * self.fumble_lost
+        score += pplayer.fumbles_rec * self.fumble_rec
+        score += pplayer.defense_int * self.def_int
+
+        # Punt stuff
+
+        # score += pplayer.
+
         return 0
 
 

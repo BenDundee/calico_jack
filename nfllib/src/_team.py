@@ -1,4 +1,5 @@
 #!
+from __future__ import absolute_import
 
 import itertools as it
 from os import path
@@ -24,9 +25,9 @@ def _player_lookup(player, conn):
 def _defense_lookup(d, conn):
     t = standard_team(d)
     if t != 'UNK':
-        return t, t
+        return (t, t), False
     else:
-        return _player_lookup(d, conn)
+        return _player_lookup(d, conn), True
 
 
 def _get_player(dat, conn):
@@ -37,10 +38,13 @@ def _get_player(dat, conn):
 
 
 def _get_defense(dat, conn):
+    starters = [_defense_lookup(s, conn) for s in dat.get("starters", [])]
+    bench = [_defense_lookup(b, conn) for b in dat.get("bench", [])]
+    is_idp = all(x[-1] for x in starters) and (all(x[-1] for x in bench))
     return {
-        "starters": [_defense_lookup(s, conn) for s in dat.get("starters", [])]
-        , "bench": [_defense_lookup(b, conn) for b in dat.get("bench", [])]
-    }
+        "starters": [x[0] for x in starters]
+        , "bench": [x[0] for x in bench]
+    }, is_idp
 
 
 class FantasyTeam(Configurable):
@@ -64,7 +68,7 @@ class FantasyTeam(Configurable):
         self.flex = _get_player(self.config.get("flex", {}), conn)
 
         # Defense separately
-        self.def_ = _get_defense(self.config.get("def", {}), conn)
+        self.def_, self.is_idp = _get_defense(self.config.get("def", {}), conn)
 
     @property
     def starters(self):
@@ -95,7 +99,7 @@ if __name__ == "__main__":
     cfg_loc = path.abspath(path.dirname(__file__)) + "/../config/team.pcfg"
     db = connect()
     team = FantasyTeam(db, cfg_loc)
-    starters = team.starters
-    bench = team.bench
+    _starters = team.starters
+    _bench = team.bench
 
     print("break!")

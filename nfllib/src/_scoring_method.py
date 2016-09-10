@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division
 
 import itertools as it
-from nfldb import Play
+from nfldb import PlayPlayer
 from os import path
 
 from nfllib.src._scoring_handlers import ThrowerScoring, CatcherScoring, RunnerScoring, KickerScoring, DefStScoring
@@ -10,11 +10,9 @@ from nfllib.src._configurable import Configurable
 
 
 class ScoringMethod(Configurable):
-    """
-    A class designed to return the fantasy score of a set of plays.
+    """ A class designed to return the fantasy score of a set of plays.
 
     """
-
     def __init__(self, cfg_location):
         """
 
@@ -40,22 +38,21 @@ class ScoringMethod(Configurable):
         ]
         self.apply_handlers = lambda x: sum(score(x) for score in self._scoring_handlers)
 
-    def calculate_score(self, plays):
+    def calculate_score(self, play_players):
         """
 
-        :param plays: a list of plays
-        :type plays: list[Play]
-        :return: dict[Player, int]
-        :rtype: dict[Player, int]
+        :param play_players: a list of plays
+        :type play_players: list[PlayPlayer]
+        :return: mapping of player name to score
+        :rtype: dict[str, float]
         """
         score = {}
         player_ids = []
-        for p in it.chain.from_iterable(p.play_players for p in plays):
+        for p in play_players:
 
             # Are we already tracking this player?
-            if p.player.player_id not in player_ids:
+            if p.player.player_id not in score:
                 score[p.player.player_id] = 0
-                player_ids.append(p.player.player_id)
 
             # update scoring
             score[p.player.player_id] += self.apply_handlers(p)
@@ -72,6 +69,6 @@ if __name__ == "__main__":
     db = nfl.connect()
     q = nfl.Query(db)
     _ = q.play(gsis_id="2009081350")
-    score = sm.calculate_score(q.as_plays())
+    _score = sm.calculate_score(q.as_plays())
 
     print('break!')

@@ -1,5 +1,7 @@
 thrower_scoring:
     passing_yds:
+        score_rules:
+            allow_fractions: False
         per: 25
         points: 1
     int_thrown: -2
@@ -11,6 +13,8 @@ thrower_scoring:
           bonus: 1
 
 runner_scoring:
+    score_rules:
+        allow_fractions: False
     rushing_yds:
         per: 10
         points: 1
@@ -28,9 +32,14 @@ catcher_scoring:
     receiving_yds:
         per: 10
         points: 1
+        score_rules:
+            allow_fractions: False
     receptions:
         per: 1
         points: 0.5
+        score_rules:
+            allow_fractions: True
+            fraction_unit: 0.5
     receiving_td: 6
     receiving_2pc: 2
     receiving_bonus:
