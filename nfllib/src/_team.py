@@ -1,7 +1,6 @@
 #!
 from __future__ import absolute_import
 
-import itertools as it
 from os import path
 from nfldb import Query, player_search, connect, standard_team
 

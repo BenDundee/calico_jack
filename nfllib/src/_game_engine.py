@@ -70,10 +70,8 @@ class GameEngine(Configurable):
 
         # Calculate scores:
         return {
-            p.player_id: self.scoring_method.calculate_score()
+            p.player_id: self.scoring_method.calculate_score(p) for p in players
         }
-
-        return self.scoring_method.calculate_score(q.as_play_players())
 
     def _score_defense(self, game):
         """
@@ -93,5 +91,6 @@ if __name__ == "__main__":
     #print('break!')
 
     score2 = engine.score_game(gsis_id="2009081350", player_id="00-0022924")
+    assert score2["00-0022924"] == 1.0
     print('break!')
 
