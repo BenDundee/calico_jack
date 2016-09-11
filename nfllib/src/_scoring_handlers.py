@@ -1,10 +1,8 @@
 #!
 from __future__ import division, absolute_import
 
-from decimal import Decimal
 import itertools as it
 from math import floor
-from nfldb import Game
 
 from ._player_stats import PlayerStats
 
