@@ -78,7 +78,7 @@ class PlayerStats(object):
 
         self.catching = {
             "targets": 0
-            , "receiving_rec": 0
+            , "receptions": 0
             , "receiving_yds": 0
             , "receiving_tds": 0
             , "receiving_twoptm": 0
@@ -159,7 +159,7 @@ class PlayerStats(object):
             if p.receiving_rec:
                 self.catching["reception_lengths"].append(p.receiving_yds)
             if p.receiving_tds:
-                self.catching["receiving_tds"].append(p.receiving_tds)
+                self.catching["td_lengths"].append(p.receiving_yds)
 
             #
             # Kicking
@@ -175,13 +175,15 @@ class PlayerStats(object):
                 if p.kicking_fgm:
                     self.kicking["made_lengths"].append(p.kicking_fgm_yds)
                 else:
-                    self.kicking["missed_lengths"].append(p.kicking_fga_yds)
+                    self.kicking["missed_lengths"].append(p.kicking_fgmissed_yds)
 
             #
             # Defense/ST
             #
             self.d_st["int"] += p.defense_int
-            self.d_st["int_ret_yds"] += p.defense_int_yds
+            if self.d_st["int_ret_yds"]:
+                self.d_st["int_ret_yds"].append(p.defense_int_yds)
+
             self.d_st["fumble_lost"] += p.fumbles_lost
             self.d_st["fumble_rec"] += p.fumbles_rec
 

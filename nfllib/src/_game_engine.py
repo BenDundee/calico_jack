@@ -1,11 +1,12 @@
 #!
 from __future__ import absolute_import
-from nfldb import connect, Query
+from nfldb import connect, Query, Game
 from os import path
 
 from nfllib.src._configurable import Configurable
 from nfllib.src._scoring_method import ScoringMethod
 from nfllib.src._team import FantasyTeam
+from nfllib.src._player_stats import PlayerStats
 
 
 DEFAULT_FILE_LOCATION = "config/game.pcfg"
@@ -28,8 +29,6 @@ class GameEngine(Configurable):
 
         # Game elements
         self.scoring_method = self._config_handler("scoring_method")
-
-        # TODO: refactor FantasyTeam class so that it doesn't need the db connection
         self.fantasy_team = self._config_handler("fantasy_team", conn=self._conn)
 
     def _config_handler(self, tag, **kwargs):
@@ -58,10 +57,22 @@ class GameEngine(Configurable):
         """
         q = Query(self._conn)
         _ = q.game(gsis_id=gsis_id)
-        if player_id is not None:
-            _ = q.player(player_id=player_id)
 
         # get score
+        game = q.as_games()[0]  # type: Game
+        players = (
+            [PlayerStats(player_id)] if player_id is not None
+            else [PlayerStats(p.player_id) for p in game.players]
+        )
+
+        # Add game:
+        _ = [p.add_game(game) for p in players]
+
+        # Calculate scores:
+        return {
+            p.player_id: self.scoring_method.calculate_score()
+        }
+
         return self.scoring_method.calculate_score(q.as_play_players())
 
     def _score_defense(self, game):

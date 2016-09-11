@@ -1,12 +1,9 @@
 #!
 from __future__ import absolute_import, division
 
-import itertools as it
-from nfldb import PlayPlayer
-from os import path
-
 from nfllib.src._scoring_handlers import ThrowerScoring, CatcherScoring, RunnerScoring, KickerScoring, DefStScoring
 from nfllib.src._configurable import Configurable
+from nfllib.src._player_stats import PlayerStats
 
 
 class ScoringMethod(Configurable):
@@ -36,39 +33,45 @@ class ScoringMethod(Configurable):
             , self.kicker_scoring.calculate_score
             , self.def_st_scoring.calculate_score
         ]
-        self.apply_handlers = lambda x: sum(score(x) for score in self._scoring_handlers)
+        self.__apply_handlers = lambda x: sum(score(x) for score in self._scoring_handlers)
 
-    def calculate_score(self, play_players):
+    def calculate_score(self, player_stats):
         """
 
-        :param play_players: a list of plays
-        :type play_players: list[PlayPlayer]
-        :return: mapping of player name to score
-        :rtype: dict[str, float]
+        :param player_stats:
+        :type player_stats: PlayerStats
+        :return: mapping of player id to score
+        :rtype: float
         """
-        score = {}
-        player_ids = []
-        for p in play_players:
-
-            # Are we already tracking this player?
-            if p.player.player_id not in score:
-                score[p.player.player_id] = 0
-
-            # update scoring
-            score[p.player.player_id] += self.apply_handlers(p)
-
-        return score
+        return self.__apply_handlers(player_stats)
 
 
 if __name__ == "__main__":
+    from itertools import ifilter
     import nfldb as nfl
+    from os import path
 
     cfg_loc = path.abspath(path.dirname(__file__)) + "/../config/scoring.pcfg"
     sm = ScoringMethod(cfg_loc)
 
     db = nfl.connect()
     q = nfl.Query(db)
-    _ = q.play(gsis_id="2009081350")
-    _score = sm.calculate_score(q.as_plays())
+    _ = q.game(gsis_id="2009081350")
+
+    gm = q.as_games()[0]
+    stats = [PlayerStats(p[1].player_id) for p in gm.players]
+    _ = [p.add_game(gm) for p in stats]
+    scores = {
+        p.player_id: sm.calculate_score(p) for p in stats
+    }
 
     print('break!')
+
+    # Look at a single player
+    # Onrea Jones
+    # 2 rec., 43 yds, 1 TD (20)
+    stat = ifilter(lambda x: x.player_id == '00-0024645', stats).next()
+    score = sm.calculate_score(stat)
+    assert score == 11.0
+
+    print('break')

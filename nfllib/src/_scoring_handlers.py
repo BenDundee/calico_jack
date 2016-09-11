@@ -29,9 +29,8 @@ def _range_checker(x, lower, upper):
 class _ScoringHandler(object):
 
     def __init__(self, cfg):
-        self.cfg = cfg
-        self.base_cfg = self.cfg.get("scoring", {})
-        self.decimal_places = self.base_cfg.get("decimal_places", 1)  # type: int
+        self.__base_cfg = cfg.get("scoring", {})
+        self.decimal_places = self.__base_cfg.get("decimal_places", 1)  # type: int
 
     def calculate_score(self, player_stats):
         """
@@ -72,7 +71,7 @@ class ThrowerScoring(_ScoringHandler):
         # TODO: abstract this behavior away
         per_yd = self.passing_yds["points"] / self.passing_yds["per"]
         passing_score = player_stats.throwing["passing_yds"] * per_yd
-        if not self.passing_yds["score_rules"]["allow_fractions"]:
+        if not self.passing_yds["rules"]["allow_fractions"]:
             passing_score = floor(passing_score)
         score += passing_score
 
@@ -121,8 +120,11 @@ class CatcherScoring(_ScoringHandler):
         score += receiving_score
 
         # TODO: abstract this away too
-        per_reception = self.receptions["points"] / self.receiving_yds["per"]
-        score += player_stats.catching["receptions"] * per_reception
+        per_reception = self.receptions["points"] / self.receptions["per"]
+        reception_score = player_stats.catching["receptions"] * per_reception
+        if not self.receptions["rules"]["allow_fractions"]:
+            reception_score = floor(reception_score)
+        score += reception_score
 
         # tds
         score += player_stats.catching["receiving_tds"] * self.receiving_tds
@@ -294,19 +296,28 @@ class DefStScoring(_ScoringHandler):
         return round(score, self.decimal_places)
 
 
-class Bonus(_ScoringHandler):
+class _BonusHandler(object):
+
+    def __init__(self, cfg):
+        self.__base_cfg = cfg
+
+    def calculate_score(self, player_stats):
+        pass
+
+
+class Bonus(_BonusHandler):
 
     def __init__(self, cfg):
         super(Bonus, self).__init__(cfg)
 
-    def calculate_score(self, pplayer):
-        return 0
+    def calculate_score(self, player_stats):
+        pass
 
 
-class BonusHandler(_ScoringHandler):
+class BonusHandler(_BonusHandler):
 
     def __init__(self, cfg):
         super(BonusHandler, self).__init__(cfg)
 
-    def calculate_score(self, pplayer):
-        return 0
+    def calculate_score(self, player_stats):
+        pass
