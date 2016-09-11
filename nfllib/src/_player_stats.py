@@ -88,11 +88,13 @@ class PlayerStats(object):
 
         self.kicking = {
             "attempts": 0
-            , "attempt_legths": []
             , "made": 0
+            , "missed": 0
             , "made_lengths": []
+            , "missed_lengths": []
             , "xp_attempts": 0
             , "xp_made": 0
+            , "xp_missed": 0
         }
 
         # D/ST scoring. Include all fumbles/ints here
@@ -149,7 +151,7 @@ class PlayerStats(object):
             # Receiving
             #
             self.catching["targets"] += p.receiving_tar
-            self.catching["receiving_rec"] += p.receiving_rec
+            self.catching["receptions"] += p.receiving_rec
             self.catching["receiving_yds"] += p.receiving_yds
             self.catching["receiving_tds"] += p.receiving_tds
             self.catching["receiving_twoptm"] += p.receiving_twoptm
@@ -164,14 +166,16 @@ class PlayerStats(object):
             #
             self.kicking["attempts"] += p.kicking_fga
             self.kicking["made"] += p.kicking_fgm
+            self.kicking["missed"] += p.kicking_fgmissed
             self.kicking["xp_attempts"] += p.kicking_xpa
             self.kicking["xp_made"] += p.kicking_xpmade
+            self.kicking["xp_missed"] += p.kicking_xpmissed
 
             if p.kicking_fga:
                 if p.kicking_fgm:
                     self.kicking["made_lengths"].append(p.kicking_fgm_yds)
                 else:
-                    self.kicking["attempt_legths"].append(p.kicking_fga_yds)
+                    self.kicking["missed_lengths"].append(p.kicking_fga_yds)
 
             #
             # Defense/ST

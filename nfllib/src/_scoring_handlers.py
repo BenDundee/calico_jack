@@ -3,7 +3,10 @@ from __future__ import division, absolute_import
 
 from decimal import Decimal
 import itertools as it
+from math import floor
 from nfldb import Game
+
+from ._player_stats import PlayerStats
 
 
 def _range_checker(x, lower, upper):
@@ -28,17 +31,17 @@ def _range_checker(x, lower, upper):
 class _ScoringHandler(object):
 
     def __init__(self, cfg):
-        self.score = dict()  # type: dict(basestring, Decimal)
+        self.cfg = cfg
+        self.base_cfg = self.cfg.get("scoring", {})
+        self.decimal_places = self.base_cfg.get("decimal_places", 1)  # type: int
 
-    def calculate_score(self, game, player_id=None):
+    def calculate_score(self, player_stats):
         """
 
-        :param game: a single Game
-        :type game: Game
-        :param player_id: basestring
-        :type player_id:
+        :param player_stats:
+        :type player_stats: PlayerStats
         :return: A score
-        :rtype: dict[str, float]
+        :rtype: float
         """
         raise NotImplementedError("This method must be overridden")
 
@@ -55,41 +58,39 @@ class ThrowerScoring(_ScoringHandler):
         self.passing_2pc = cfg.get("passing_2pc")
         self.passing_bonus = BonusHandler(cfg.get("passing_bonus"))
 
-    def calculate_score(self, game, player_id=None):
+    def calculate_score(self, player_stats):
+        """
+
+        :param player_stats:
+        :type player_stats: PlayerStats
+        :return:
+        :rtype: float
+        """
 
         # Initialize score
-        self.score = {
-            p.player_id: Decimal(0.0) for p in game.as_players()
-        }
-
-        # Total passing yards
-        total_passing_yards =
-
-
-
-
-
-
-
+        score = 0.0
 
         # passing yards
         # TODO: abstract this behavior away
         per_yd = self.passing_yds["points"] / self.passing_yds["per"]
-        score += pplayer.passing_yds * per_yd
+        passing_score = player_stats.throwing["passing_yds"] * per_yd
+        if not self.passing_yds["score_rules"]["allow_fractions"]:
+            passing_score = floor(passing_score)
+        score += passing_score
 
         # passing tds
-        score += pplayer.passing_tds * self.passing_td
+        score += player_stats.throwing["passing_tds"] * self.passing_td
 
         # ints
-        score += pplayer.passing_int * self.int_thrown
+        score += player_stats.throwing["int_thrown"] * self.int_thrown
 
         # 2 pt conversions
-        score += pplayer.passing_twoptm
+        score += player_stats.throwing["two_pt_made"] * self.passing_2pc
 
         # Apply bonuses
         # TODO: apply bonuses
 
-        return score
+        return round(score, self.decimal_places)
 
 
 class CatcherScoring(_ScoringHandler):
@@ -104,24 +105,34 @@ class CatcherScoring(_ScoringHandler):
         self.receiving_2pc = cfg.get("receiving_2pc")
         self.receiving_bonus = BonusHandler(cfg.get("receiving_bonus"))
 
-    def calculate_score(self, pplayer):
+    def calculate_score(self, player_stats):
+        """
+
+        :param player_stats:
+        :type player_stats: PlayerStats
+        :return:
+        :rtype: float
+        """
         score = 0.0
 
         # TODO: abstract this away
         per_yd = self.receiving_yds["points"] / self.receiving_yds["per"]
-        score += pplayer.receiving_yds * per_yd
+        receiving_score = player_stats.catching["receiving_yds"] * per_yd
+        if not self.receiving_yds["rules"]["allow_fractions"]:
+            receiving_score = floor(receiving_score)
+        score += receiving_score
 
         # TODO: abstract this away too
         per_reception = self.receptions["points"] / self.receiving_yds["per"]
-        score += pplayer.receiving_rec * per_reception
+        score += player_stats.catching["receptions"] * per_reception
 
         # tds
-        score += pplayer.receiving_tds * self.receiving_tds
+        score += player_stats.catching["receiving_tds"] * self.receiving_tds
 
         # 2pt conversions
-        score += pplayer.receiving_twoptm * self.receiving_2pc
+        score += player_stats.catching["receiving_twoptm"] * self.receiving_2pc
 
-        return score
+        return round(score, self.decimal_places)
 
 
 class RunnerScoring(_ScoringHandler):
@@ -135,20 +146,30 @@ class RunnerScoring(_ScoringHandler):
         self.rushing_2pc = cfg.get("rushing_2pc")
         self.rushing_bonus = BonusHandler(cfg.get("rushing_bonus"))
 
-    def calculate_score(self, pplayer):
+    def calculate_score(self, player_stats):
+        """
+
+        :param player_stats:
+        :type player_stats: PlayerStats
+        :return:
+        :rtype: float
+        """
         score = 0.0
 
         # TODO: Abstract this away
         per_yd = self.rushing_yds["points"] / self.rushing_yds["per"]
-        score += pplayer.rushing_yds * per_yd
+        rushing_score = player_stats.running["rushing_yds"] * per_yd
+        if not self.rushing_yds["rules"]["allow_fractions"]:
+            rushing_score = floor(rushing_score)
+        score += rushing_score * per_yd
 
         # TDs
-        score += pplayer.rushing_tds * self.rushing_td
+        score += player_stats.running["rushing_tds"] * self.rushing_td
 
         # 2pt conversion
-        score += pplayer.rushing_twoptm * self.rushing_2pc
+        score += player_stats.running["two_pt_made"] * self.rushing_2pc
 
-        return score
+        return round(score, self.decimal_places)
 
 
 class KickerScoring(_ScoringHandler):
@@ -198,22 +219,31 @@ class KickerScoring(_ScoringHandler):
         else:
             raise NotImplementedError("This field goal scoring method has not been invented yet!")
 
-    def calculate_score(self, pplayer):
+    def calculate_score(self, player_stats):
+        """
+
+        :param player_stats:
+        :type player_stats: PlayerStats
+        :return:
+        :rtype: float
+        """
         score = 0.0
 
         # PAT
-        score += pplayer.kicking_xpmade * self.pat
+        score += player_stats.kicking["xp_made"] * self.pat
 
         # PAT missed
-        score += pplayer.kicking_xpmissed * self.pat_missed
+        score += player_stats.kicking["xp_missed"] * self.pat_missed
 
         # score fg
-        if pplayer.kicking_fgmissed:
-            score += self.__score_fg(False, pplayer.kicking_fgmissed_yds)
-        if pplayer.kicking_fgm:
-            score += self.__score_fg(True, pplayer.kicking_fgm_yds)
+        if player_stats.kicking["made"]:
+            for yds in player_stats.kicking["made_lengths"]:
+                score += self.__score_fg(True, yds)
+        if player_stats.kicking["missed"]:
+            for yds in player_stats.kicking["missed_lengths"]:
+                score += self.__score_fg(False, yds)
 
-        return score
+        return round(score, self.decimal_places)
 
 
 class DefStScoring(_ScoringHandler):
@@ -244,20 +274,26 @@ class DefStScoring(_ScoringHandler):
         # yds
         self.def_yds_allowed = cfg.get("def_yds_allowed")
 
-    def calculate_score(self, pplayer):
+    def calculate_score(self, player_stats):
+        """
+
+        :param player_stats:
+        :type player_stats: PlayerStats
+        :return:
+        :rtype: float
+        """
         score = 0.0
 
         # Regular defensive stuff
-        score += pplayer.defense_sk * self.sack
-        score += pplayer.fumbles_lost * self.fumble_lost
-        score += pplayer.fumbles_rec * self.fumble_rec
-        score += pplayer.defense_int * self.def_int
+        score += player_stats.d_st["fumble_lost"] * self.fumble_lost
+        score += player_stats.d_st["fumble_rec"] * self.fumble_rec
+        score += player_stats.d_st["int"] * self.def_int
 
         # Punt stuff
 
         # score += pplayer.
 
-        return 0
+        return round(score, self.decimal_places)
 
 
 class Bonus(_ScoringHandler):
